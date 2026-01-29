@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, ButtonGroup } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 
@@ -7,6 +7,7 @@ function TaskForm({ onSave, initialTask }) {
   const [title, setTitle] = useState(initialTask?.title || '');
   const [description, setDescription] = useState(initialTask?.description || '');
   const [dueDate, setDueDate] = useState(initialTask?.due_date || '');
+  const [priority, setPriority] = useState(initialTask?.priority || 'P3');
   const [error, setError] = useState(null);
 
   // Helper to normalize date string to YYYY-MM-DD format
@@ -30,10 +31,12 @@ function TaskForm({ onSave, initialTask }) {
       setTitle(initialTask.title || '');
       setDescription(initialTask.description || '');
       setDueDate(normalizeDateString(initialTask.due_date));
+      setPriority(initialTask.priority || 'P3');
     } else {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setPriority('P3');
     }
   }, [initialTask]);
 
@@ -44,10 +47,11 @@ function TaskForm({ onSave, initialTask }) {
       return;
     }
     setError(null);
-    await onSave({ title, description, due_date: dueDate });
+    await onSave({ title, description, due_date: dueDate, priority });
     setTitle('');
     setDescription('');
     setDueDate('');
+    setPriority('P3');
   };
 
   return (
@@ -144,16 +148,44 @@ function TaskForm({ onSave, initialTask }) {
           }}
         />
         {error && <Typography color="error" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>{error}</Typography>}
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={2} alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: '#616161' }}>
+              Priority
+            </Typography>
+            <ButtonGroup size="small" aria-label="priority selector">
+              {['P1','P2','P3'].map(p => (
+                <Button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  variant={priority === p ? 'contained' : 'outlined'}
+                  sx={{
+                    minWidth: 44,
+                    borderRadius: 1.5,
+                    px: 1.25,
+                    color: priority === p ? '#ffffff' : '#7A7A7A',
+                    backgroundColor: priority === p ? '#07F2E6' : 'transparent',
+                    borderColor: priority === p ? '#07F2E6' : '#7A7A7A',
+                    '&:hover': {
+                      backgroundColor: priority === p ? '#07F2E6' : 'rgba(0,0,0,0.04)',
+                      borderColor: priority === p ? '#07F2E6' : '#7A7A7A'
+                    }
+                  }}
+                >
+                  {p}
+                </Button>
+              ))}
+            </ButtonGroup>
+          </Box>
           <Button 
             type="submit" 
             variant="contained" 
             color="primary"
-            fullWidth
             data-testid="submit-task"
             startIcon={initialTask ? <SaveIcon /> : <AddIcon />}
             sx={{
               borderRadius: 2,
+              px: 2.5,
               py: 1,
               fontWeight: 600,
               textTransform: 'none',
