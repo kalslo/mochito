@@ -1,0 +1,140 @@
+- Epic: MVP — Due Date Support
+  - Story: Add optional due date to task
+    - Acceptance Criteria:
+      - A task can be created without a due date; creation succeeds.
+      - A task can be created with a due date in ISO format (YYYY-MM-DD).
+      - When no due date is set, the task displays with no due date.
+    - Technical Requirements:
+      - Frontend: Use MUI `TextField` with `type="date"`; bind to `due_date` string in `YYYY-MM-DD` format.
+      - Frontend: Normalize any incoming date to `YYYY-MM-DD` (see normalization in [packages/frontend/src/TaskForm.js](packages/frontend/src/TaskForm.js)).
+      - Backend: `tasks.due_date` is nullable; POST/PUT accept `due_date` or `null` and persist as-is (see [packages/backend/src/app.js](packages/backend/src/app.js)).
+      - API: `POST /api/tasks` payload `{ title, description?, due_date? }` returns `201` with created task JSON including `id`.
+  - Story: Validate due date format (YYYY-MM-DD)
+    - Acceptance Criteria:
+      - Only values matching ISO YYYY-MM-DD are considered valid.
+      - Values not matching the format are rejected by validation and not stored as a due date.
+    - Technical Requirements:
+      - Frontend: Validate with regex `^\d{4}-\d{2}-\d{2}$` before submit; prevent invalid values from being sent.
+      - Backend: Treat non-matching values as `null` when writing to DB (send `null` from client when invalid).
+      - Display: Format chip label via localized date for UX (see `formatDueDate` in [packages/frontend/src/TaskList.js](packages/frontend/src/TaskList.js)).
+  - Story: Ignore invalid due dates
+    - Acceptance Criteria:
+      - If an invalid due date value is provided, the task is saved and the due date is treated as absent.
+      - No invalid date value is persisted in the task model.
+    - Technical Requirements:
+      - Frontend: On invalid input, submit payload with `due_date: null`.
+      - Backend: `INSERT/UPDATE` should persist `NULL` for absent/invalid dates; GET returns no `due_date` field or `null` value.
+- Epic: MVP — Priority Levels (P1–P3)
+  - Story: Add priority field P1/P2/P3
+    - Acceptance Criteria:
+      - A task’s priority accepts only P1, P2, or P3.
+      - Attempts to set any other value do not change the stored priority.
+    - Technical Requirements:
+      - Backend: Add `priority TEXT CHECK(priority IN ('P1','P2','P3')) DEFAULT 'P3'` to `tasks` table; include in SELECT/INSERT/UPDATE.
+      - API: Accept/return `priority` on POST/PUT; default to `'P3'` when omitted.
+      - Frontend: Add MUI `Select` for `priority` in `TaskForm`; submit `priority` with values `'P1'|'P2'|'P3'`.
+  - Story: Default priority to P3 when unspecified
+    - Acceptance Criteria:
+      - When priority is not provided on creation, the stored priority is P3.
+      - Reading the task shows priority P3 when none was specified at creation.
+    - Technical Requirements:
+      - Backend: Default `priority` via schema default `'P3'`.
+      - Frontend: If field omitted, rely on backend default; display `P3` in list/detail.
+- Epic: MVP — Filters (All/Today/Overdue)
+  - Story: Add All filter view
+    - Acceptance Criteria:
+      - Selecting “All” shows both completed and incomplete tasks.
+      - Tasks without a due date are included in “All”.
+    - Technical Requirements:
+      - Frontend: Add filter state `all|today|overdue`; render list based on client-side filtering of fetched tasks.
+      - API: Use `GET /api/tasks` without `completed` filter to retrieve all tasks.
+  - Story: Add Today filter view
+    - Acceptance Criteria:
+      - Selecting “Today” shows only tasks due on the current calendar date.
+      - Completed tasks are not shown in “Today”.
+      - Tasks without a due date are not shown in “Today”.
+    - Technical Requirements:
+      - Frontend: Compute “today” with local date; filter tasks where `due_date === YYYY-MM-DD(today)` and `!completed`.
+      - API: Optionally fetch all then filter client-side; current API has no date-based filter.
+  - Story: Add Overdue filter view
+    - Acceptance Criteria:
+      - Selecting “Overdue” shows only tasks with due dates before the current date.
+      - Completed tasks are not shown in “Overdue”.
+      - Tasks without a due date are not shown in “Overdue”.
+    - Technical Requirements:
+      - Frontend: Compare `due_date < YYYY-MM-DD(today)` using string comparison on `YYYY-MM-DD`; include only `!completed`.
+      - API: Optionally fetch all then filter client-side; current API has no date-based filter.
+  - Story: Hide completed in Today and Overdue
+    - Acceptance Criteria:
+      - In “Today” and “Overdue” views, completed tasks do not appear.
+    - Technical Requirements:
+      - Frontend: Apply `task.completed === false` predicate in these views.
+  - Story: Include completed in All view
+    - Acceptance Criteria:
+      - In the “All” view, completed tasks appear alongside incomplete tasks.
+    - Technical Requirements:
+      - Frontend: No filter predicate on completion for All; optionally use API `completed` query to refine when needed.
+- Epic: MVP — Data Model & Validation
+  - Story: Require title on task
+    - Acceptance Criteria:
+      - Creating a task without a non-empty title fails and the task is not saved.
+    - Technical Requirements:
+      - Frontend: Require `title` non-empty; block submit and show inline error.
+      - Backend: Validate `title` and return `400 { error: 'Task title is required' }` (see [packages/backend/src/app.js](packages/backend/src/app.js)).
+  - Story: Add dueDate and priority to task model
+    - Acceptance Criteria:
+      - The task model includes fields: title (required), priority (enum P1/P2/P3), dueDate (optional ISO string).
+      - When dueDate is absent or invalid, it is not stored.
+      - When priority is absent, it is stored as P3.
+    - Technical Requirements:
+      - Data shape: `{ id, title, description, due_date?, completed, created_at, priority? }`.
+      - Backend: Extend schema and endpoints to read/write `priority` and `due_date` as described.
+      - Frontend: Use `due_date` snake_case to align with API; map directly in fetch payloads.
+- Epic: MVP — Local Storage Only
+  - Story: Persist tasks locally (no backend)
+    - Acceptance Criteria:
+      - Task create/read/update/delete operations persist locally (e.g., browser local storage) and function offline.
+      - No network request is required to store or retrieve tasks.
+    - Technical Requirements:
+      - Frontend: Introduce a storage abstraction (e.g., `TaskService`) with `list/create/update/patch/delete` methods.
+      - Frontend: Provide `LocalTaskService` using `window.localStorage` for persistence.
+      - Frontend: Wire `App`, `TaskForm`, and `TaskList` to call the service instead of `fetch` when in local mode.
+  - Story: Ensure no backend changes
+    - Acceptance Criteria:
+      - The application requires no server/API changes to meet MVP scope.
+      - Running the app without a backend service still allows all MVP behaviors.
+    - Technical Requirements:
+      - Frontend: Feature-flag or config to select `local` vs `api` storage at runtime.
+      - Build: Default to `local` mode for MVP; keep API mode available for development/testing.
+- Epic: Post-MVP — Overdue Highlighting
+  - Story: Visually highlight overdue tasks
+    - Acceptance Criteria:
+      - Tasks with due dates before today have a distinct visual treatment from non-overdue tasks.
+    - Technical Requirements:
+      - Frontend: Apply distinct styling (e.g., red border/background or chip variant) when `due_date < today`.
+      - UI: Ensure contrast per UI guidelines and that completed tasks retain strikethrough.
+- Epic: Post-MVP — Advanced Sorting
+  - Story: Order overdue tasks first
+    - Acceptance Criteria:
+      - Overdue tasks appear above all non-overdue tasks in task lists.
+    - Technical Requirements:
+      - Frontend: Implement client-side sort grouping overdue before non-overdue.
+      - Backend: Current default sort is `due_date IS NULL`, `due_date ASC`, `created_at ASC`; client may override order after fetch.
+  - Story: Then sort by priority P1→P3
+    - Acceptance Criteria:
+      - Within the same overdue status group, tasks are ordered by priority with P1 before P2 before P3.
+    - Technical Requirements:
+      - Frontend: Include priority comparator once priority is available in task data.
+      - Backend: Optionally extend ORDER BY to include `priority` after implementing the column.
+  - Story: Then sort by due date ascending
+    - Acceptance Criteria:
+      - For tasks with the same overdue status and priority, earlier due dates appear before later ones.
+    - Technical Requirements:
+      - Frontend: Compare `due_date` strings (ISO) ascending.
+      - Backend: Existing `ORDER BY due_date ASC` supports this when used server-side.
+  - Story: Place undated tasks last
+    - Acceptance Criteria:
+      - Tasks without a due date appear after all tasks with due dates.
+    - Technical Requirements:
+      - Backend: Current `ORDER BY due_date IS NULL` places undated last; preserve when server-side sorting.
+      - Frontend: When sorting client-side, push `!due_date` to the end of the list.
