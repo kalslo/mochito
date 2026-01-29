@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import { CssBaseline, Container, AppBar, Toolbar, Typography, Box } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import TaskList from './TaskList';

@@ -228,12 +228,12 @@ function TaskList({ onEdit }) {
                         lineHeight: 1,
                         borderRadius: 1.5,
                         px: 1,
-                        color: task.priority === p ? '#ffffff' : '#7A7A7A',
-                        backgroundColor: task.priority === p ? '#07F2E6' : 'transparent',
-                        borderColor: task.priority === p ? '#07F2E6' : '#7A7A7A',
+                        color: task.priority === p ? '#ffffff' : 'var(--priority-gray)',
+                        backgroundColor: task.priority === p ? 'var(--priority-blue)' : 'transparent',
+                        borderColor: task.priority === p ? 'var(--priority-blue)' : 'var(--priority-gray)',
                         '&:hover': {
-                          backgroundColor: task.priority === p ? '#07F2E6' : 'rgba(0,0,0,0.04)',
-                          borderColor: task.priority === p ? '#07F2E6' : '#7A7A7A'
+                          backgroundColor: task.priority === p ? 'var(--priority-blue)' : 'rgba(0,0,0,0.04)',
+                          borderColor: task.priority === p ? 'var(--priority-blue)' : 'var(--priority-gray)'
                         }
                       }}
                     >

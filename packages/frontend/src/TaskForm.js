@@ -163,12 +163,12 @@ function TaskForm({ onSave, initialTask }) {
                     minWidth: 44,
                     borderRadius: 1.5,
                     px: 1.25,
-                    color: priority === p ? '#ffffff' : '#7A7A7A',
-                    backgroundColor: priority === p ? '#07F2E6' : 'transparent',
-                    borderColor: priority === p ? '#07F2E6' : '#7A7A7A',
+                    color: priority === p ? '#ffffff' : 'var(--priority-gray)',
+                    backgroundColor: priority === p ? 'var(--priority-blue)' : 'transparent',
+                    borderColor: priority === p ? 'var(--priority-blue)' : 'var(--priority-gray)',
                     '&:hover': {
-                      backgroundColor: priority === p ? '#07F2E6' : 'rgba(0,0,0,0.04)',
-                      borderColor: priority === p ? '#07F2E6' : '#7A7A7A'
+                      backgroundColor: priority === p ? 'var(--priority-blue)' : 'rgba(0,0,0,0.04)',
+                      borderColor: priority === p ? 'var(--priority-blue)' : 'var(--priority-gray)'
                     }
                   }}
                 >
